@@ -57,11 +57,40 @@ func createBook(c *gin.Context) {
 	c.IndentedJSON(http.StatusCreated, newBook)
 }
 
+func checkoutBook(c *gin.Context) {
+	book, err := getBookByid(c.Param("id"))
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "book not found"})
+		return
+	}
+
+	if book.Quantity <= 0 {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "out of storage"})
+	}
+
+	book.Quantity--
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "successful purchase!", "data": book})
+}
+
+func cancelPayment(c *gin.Context) {
+	book, err := getBookByid(c.Param("id"))
+
+	if err != nil {
+		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "book not found"})
+		return
+	}
+
+	book.Quantity++
+	c.IndentedJSON(http.StatusOK, gin.H{"message": "purchase is canceled successfuly", "data": book})
+}
+
 func main() {
 	router := gin.Default()
 	router.GET("/books", getBooks)
 	router.GET("/books/:id", bookById)
 	router.POST("/books", createBook)
-
+	router.PATCH("/books/buy/:id", checkoutBook)
+	router.PATCH("/books/cancel/:id", cancelPayment)
 	router.Run("localhost:8080")
 }
